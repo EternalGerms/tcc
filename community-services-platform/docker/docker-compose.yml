@@ -1,0 +1,128 @@
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: community_user
+      POSTGRES_PASSWORD: community_pass
+      POSTGRES_DB: community_services
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+    networks:
+      - community-network
+
+  api-gateway:
+    build: ../backend/api-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on:
+      - auth-service
+      - user-service
+      - service-service
+      - rating-service
+      - payment-service
+    networks:
+      - community-network
+
+  auth-service:
+    build: ../backend/auth-service
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: community_services
+      DB_USER: community_user
+      DB_PASSWORD: community_pass
+      JWT_SECRET: mySecretKey123456789012345678901234567890
+    depends_on:
+      - postgres
+    networks:
+      - community-network
+
+  user-service:
+    build: ../backend/user-service
+    ports:
+      - "8082:8082"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: community_services
+      DB_USER: community_user
+      DB_PASSWORD: community_pass
+    depends_on:
+      - postgres
+    networks:
+      - community-network
+
+  service-service:
+    build: ../backend/service-service
+    ports:
+      - "8083:8083"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: community_services
+      DB_USER: community_user
+      DB_PASSWORD: community_pass
+    depends_on:
+      - postgres
+    networks:
+      - community-network
+
+  rating-service:
+    build: ../backend/rating-service
+    ports:
+      - "8084:8084"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: community_services
+      DB_USER: community_user
+      DB_PASSWORD: community_pass
+    depends_on:
+      - postgres
+    networks:
+      - community-network
+
+  payment-service:
+    build: ../backend/payment-service
+    ports:
+      - "8085:8085"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: community_services
+      DB_USER: community_user
+      DB_PASSWORD: community_pass
+    depends_on:
+      - postgres
+    networks:
+      - community-network
+
+  frontend:
+    build: ../frontend
+    ports:
+      - "3000:3000"
+    environment:
+      REACT_APP_API_URL: http://localhost:8080
+    depends_on:
+      - api-gateway
+    networks:
+      - community-network
+
+networks:
+  community-network:
+    driver: bridge
+
+volumes:
+  postgres_data: 
